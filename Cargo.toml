@@ -1,0 +1,17 @@
+[package]
+name = "agave-analysis"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+toml = "0.8.19"
+serde = { version = "1.0.217", features = ["derive"] }
+serde_json = "1.0.138"
+
+[[bin]]
+name = "extract-packages"
+path = "src/bin/extract_packages.rs"
+
+[[bin]]
+name = "extract-dependencies"
+path = "src/bin/extract_dependencies.rs"

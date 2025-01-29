@@ -1,0 +1,63 @@
+digraph {
+
+    graph [
+        label="solana_svm",
+        labelloc=t,
+
+        pad=0.4,
+
+        // Consider rendering the graph using a different layout algorithm, such as:
+        // [dot, neato, twopi, circo, fdp, sfdp]
+        layout=neato,
+        overlap=false,
+        splines="line",
+        rankdir=LR,
+
+        fontname="Helvetica", 
+        fontsize="36",
+    ];
+
+    node [
+        fontname="monospace",
+        fontsize="10",
+        shape="record",
+        style="filled",
+    ];
+
+    edge [
+        fontname="monospace",
+        fontsize="10",
+    ];
+
+    "solana_svm" [label="crate|solana_svm", fillcolor="#5397c8"]; // "crate" node
+    "solana_svm::account_loader" [label="pub mod|account_loader", fillcolor="#81c169"]; // "mod" node
+    "solana_svm::account_overrides" [label="pub mod|account_overrides", fillcolor="#81c169"]; // "mod" node
+    "solana_svm::message_processor" [label="pub mod|message_processor", fillcolor="#81c169"]; // "mod" node
+    "solana_svm::nonce_info" [label="pub mod|nonce_info", fillcolor="#81c169"]; // "mod" node
+    "solana_svm::program_loader" [label="pub mod|program_loader", fillcolor="#81c169"]; // "mod" node
+    "solana_svm::rollback_accounts" [label="pub mod|rollback_accounts", fillcolor="#81c169"]; // "mod" node
+    "solana_svm::runtime_config" [label="pub mod|runtime_config", fillcolor="#81c169"]; // "mod" node
+    "solana_svm::transaction_account_state_info" [label="pub mod|transaction_account_state_info", fillcolor="#81c169"]; // "mod" node
+    "solana_svm::transaction_commit_result" [label="pub mod|transaction_commit_result", fillcolor="#81c169"]; // "mod" node
+    "solana_svm::transaction_error_metrics" [label="pub mod|transaction_error_metrics", fillcolor="#81c169"]; // "mod" node
+    "solana_svm::transaction_execution_result" [label="pub mod|transaction_execution_result", fillcolor="#81c169"]; // "mod" node
+    "solana_svm::transaction_processing_callback" [label="pub mod|transaction_processing_callback", fillcolor="#81c169"]; // "mod" node
+    "solana_svm::transaction_processing_result" [label="pub mod|transaction_processing_result", fillcolor="#81c169"]; // "mod" node
+    "solana_svm::transaction_processor" [label="pub mod|transaction_processor", fillcolor="#81c169"]; // "mod" node
+
+    "solana_svm" -> "solana_svm::account_loader" [label="owns", color="#000000", style="solid"] [constraint=true]; // "owns" edge
+    "solana_svm" -> "solana_svm::account_overrides" [label="owns", color="#000000", style="solid"] [constraint=true]; // "owns" edge
+    "solana_svm" -> "solana_svm::message_processor" [label="owns", color="#000000", style="solid"] [constraint=true]; // "owns" edge
+    "solana_svm" -> "solana_svm::nonce_info" [label="owns", color="#000000", style="solid"] [constraint=true]; // "owns" edge
+    "solana_svm" -> "solana_svm::program_loader" [label="owns", color="#000000", style="solid"] [constraint=true]; // "owns" edge
+    "solana_svm" -> "solana_svm::rollback_accounts" [label="owns", color="#000000", style="solid"] [constraint=true]; // "owns" edge
+    "solana_svm" -> "solana_svm::runtime_config" [label="owns", color="#000000", style="solid"] [constraint=true]; // "owns" edge
+    "solana_svm" -> "solana_svm::transaction_account_state_info" [label="owns", color="#000000", style="solid"] [constraint=true]; // "owns" edge
+    "solana_svm" -> "solana_svm::transaction_commit_result" [label="owns", color="#000000", style="solid"] [constraint=true]; // "owns" edge
+    "solana_svm" -> "solana_svm::transaction_error_metrics" [label="owns", color="#000000", style="solid"] [constraint=true]; // "owns" edge
+    "solana_svm" -> "solana_svm::transaction_execution_result" [label="owns", color="#000000", style="solid"] [constraint=true]; // "owns" edge
+    "solana_svm" -> "solana_svm::transaction_processing_callback" [label="owns", color="#000000", style="solid"] [constraint=true]; // "owns" edge
+    "solana_svm" -> "solana_svm::transaction_processing_result" [label="owns", color="#000000", style="solid"] [constraint=true]; // "owns" edge
+    "solana_svm" -> "solana_svm::transaction_processor" [label="owns", color="#000000", style="solid"] [constraint=true]; // "owns" edge
+
+}
