@@ -47,36 +47,37 @@ fn get_local_dependencies(path: String, workspace_dependencies: &Table) -> (Hash
         .get("dev-dependencies")
         .and_then(|deps| deps.as_table());
 
+    let deps = process_packages(package_dependencies, workspace_dependencies);
+    let dev_deps = process_packages(package_dev_dependencies, workspace_dependencies);
+
+    (deps, dev_deps)
+}
+
+fn process_packages(
+    package_dependencies: Option<&Table>,
+    workspace_dependencies: &Table
+) -> HashMap<String, String> {
     let mut deps: HashMap<String, String> = HashMap::new();
-    let mut dev_deps: HashMap<String, String> = HashMap::new();
 
     if let Some(dependencies) = package_dependencies {
         for (package_name, package_data) in dependencies.iter() {
-            if package_name.starts_with("solana-") && package_data.get("workspace").and_then(|w| w.as_bool()).unwrap_or(false) {
+            if package_data.get("workspace").and_then(|w| w.as_bool()).unwrap_or(false) {
                 if let Some(workspace_package) = workspace_dependencies.get(package_name) {
                     if let Some(dep_path) = workspace_package.get("path") {
                         let sanitized_dep_path = dep_path.to_string().replace(['"', '\\'], "");
-                        deps.insert(package_name.clone(), sanitized_dep_path.clone());
+                        if sanitized_dep_path.contains("sdk") {
+                          deps.insert("solana-sdk".to_string(), "sdk".to_string());
+                        } else {
+                          deps.insert(package_name.clone(), sanitized_dep_path.clone());
+                        }
+                        
                     }
                 }
             }
         }
     }
 
-    if let Some(dev_dependencies) = package_dev_dependencies {
-        for (package_name, package_data) in dev_dependencies.iter() {
-            if package_name.starts_with("solana-") && package_data.get("workspace").and_then(|w| w.as_bool()).unwrap_or(false) {
-                if let Some(workspace_package) = workspace_dependencies.get(package_name) {
-                    if let Some(dep_path) = workspace_package.get("path") {
-                        let sanitized_dep_path = dep_path.to_string().replace(['"', '\\'], "");
-                        dev_deps.insert(package_name.clone(), sanitized_dep_path.clone());
-                    }
-                }
-            }
-        }
-    }
-
-    (deps, dev_deps)
+    deps
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -108,6 +109,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             package_info_map.insert(package_name.clone(), package_info);
         }
     }
+
+    // Create output directory if it doesn't exist
+    fs::create_dir_all("output").expect("Failed to create output directory");
 
     let mut output_file = File::create("./output/packages_with_path.json")?;
     let json_data = serde_json::to_string_pretty(&package_info_map).unwrap();

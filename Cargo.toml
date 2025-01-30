@@ -13,5 +13,5 @@ name = "extract-packages"
 path = "src/bin/extract_packages.rs"
 
 [[bin]]
-name = "extract-dependencies"
-path = "src/bin/extract_dependencies.rs"
+name = "create-git-command"
+path = "src/bin/create_git_command.rs"
