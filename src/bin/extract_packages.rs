@@ -4,6 +4,9 @@ use std::io::Write;
 use toml::{Table, Value};
 use serde::{Serialize, Deserialize};
 
+// Path to the local agave repository
+const AGAVE_PATH: &str = "./../agave";
+
 #[derive(Serialize, Deserialize, Debug)]
 struct PackageInfo {
     path: String,
@@ -11,18 +14,12 @@ struct PackageInfo {
     dev_dependencies: HashMap<String, String>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-struct Package {
-    name: String,
-    path: String,
-}
-
 fn get_local_dependencies(path: String, workspace_dependencies: &Table) -> (HashMap<String, String>, HashMap<String, String>) {
-    println!("checking dependencies for path: {:?}", path);
     let sanitized_path = path.replace(['"', '\\'], "");
-    let package_toml_path = format!("./../agave/{}/Cargo.toml", sanitized_path);
+    let package_toml_path = format!("{}/{}/Cargo.toml", AGAVE_PATH, sanitized_path);
+    
+    println!("Processing dependencies for: {}", package_toml_path);
 
-    println!("package_toml_path is {:?}", package_toml_path);
     let package_toml = match fs::read_to_string(package_toml_path.clone()) {
         Ok(content) => content,
         Err(e) => {
@@ -38,7 +35,7 @@ fn get_local_dependencies(path: String, workspace_dependencies: &Table) -> (Hash
             return (HashMap::new(), HashMap::new());
         }
     };
-
+    
     let package_dependencies = package_toml_parsed
         .get("dependencies")
         .and_then(|deps| deps.as_table());
@@ -60,12 +57,14 @@ fn process_packages(
     let mut deps: HashMap<String, String> = HashMap::new();
 
     if let Some(dependencies) = package_dependencies {
-        for (package_name, package_data) in dependencies.iter() {
+        for (package_name, package_data) in dependencies {
             if package_data.get("workspace").and_then(|w| w.as_bool()).unwrap_or(false) {
                 if let Some(workspace_package) = workspace_dependencies.get(package_name) {
                     if let Some(dep_path) = workspace_package.get("path") {
                         let sanitized_dep_path = dep_path.to_string().replace(['"', '\\'], "");
-                        if sanitized_dep_path.contains("sdk") {
+
+                        // Handle solana-sdk dependencies specially
+                        if let Some("sdk") = sanitized_dep_path.split('/').next() {
                           deps.insert("solana-sdk".to_string(), "sdk".to_string());
                         } else {
                           deps.insert(package_name.clone(), sanitized_dep_path.clone());
@@ -82,9 +81,7 @@ fn process_packages(
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cargo_toml_path = "./../agave/Cargo.toml";
-
     let cargo_toml_content = fs::read_to_string(cargo_toml_path)?;
-
     let parsed_toml: Value = cargo_toml_content.parse::<Value>()?;
 
     let workspace_dependencies = parsed_toml
@@ -98,26 +95,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for (package_name, package_data) in workspace_dependencies {
         if let Some(path) = package_data.get("path") {
             let path_str = path.as_str().unwrap_or("").to_string();
-            let (local_deps, local_dev_deps) = get_local_dependencies(path.to_string(), workspace_dependencies);
+            let (
+              local_deps, 
+              local_dev_deps
+            ) = get_local_dependencies(path.to_string(), workspace_dependencies);
 
-            let package_info = PackageInfo {
-                path: path_str,
-                dependencies: local_deps,
-                dev_dependencies: local_dev_deps,
-            };
-
-            package_info_map.insert(package_name.clone(), package_info);
+            package_info_map.insert(package_name.clone(), PackageInfo {
+              path: path_str,
+              dependencies: local_deps,
+              dev_dependencies: local_dev_deps,
+            });
         }
     }
 
-    // Create output directory if it doesn't exist
-    fs::create_dir_all("output").expect("Failed to create output directory");
-
-    let mut output_file = File::create("./output/packages_with_path.json")?;
+    fs::create_dir_all("output")?;
+    let mut output_path = File::create("./output/packages_with_path.json")?;
     let json_data = serde_json::to_string_pretty(&package_info_map).unwrap();
-    write!(output_file, "{}", json_data)?;
+    write!(output_path, "{}", json_data)?;
 
-    println!("List of packages with `path = ...` written to `packages_with_path.txt`.");
+    println!("Dependencies written to `packages_with_path.json`.");
 
     Ok(())
 }
