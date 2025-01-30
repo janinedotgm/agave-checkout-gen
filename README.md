@@ -40,7 +40,8 @@ This command will analyze the Agave repository (using the path specified in `ext
 ### 2. Generate Git Checkout Command
 Generate the git sparse checkout command:
 ```bash
-cargo run --bin create_git_command
+cargo run --bin create_git_command <PACKAGE_NAME>
+# example: cargo run --bin create_git_command solana-svm
 ```
 
 ### 3. Clone the Repository
@@ -52,7 +53,7 @@ git clone --filter=blob:none --sparse https://github.com/anza-xyz/agave.git <PRO
 ### 4. Apply Sparse Checkout
 Navigate to the cloned repository and apply the generated checkout command:
 ```bash
-cd agave-solana-svm
+cd <PROJECT_NAME>
 # Copy and run the command from sparse_checkout_command.sh
 ```
 
