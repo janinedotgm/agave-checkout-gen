@@ -6,36 +6,41 @@ This tool helps generate sparse checkout commands for Agave packages, making it 
 
 - Rust and Cargo installed
 - Git
-- Agave repository cloned in the parent directory (`../agave`) or in a custom location
+- Agave repository (will be needed for to run the scripts)
 
 ## Setup
 
-1. Clone the Agave repository in the parent directory of this project (or your preferred location):
+### 1. Clone this Repository
 ```bash
-cd ..
+git clone https://github.com/janinedotgm/agave-checkout-gen.git
+cd agave-checkout-gen
+```
+
+### 2. Configure Agave Repository Path
+Update the path to your Agave repository in `src/bin/extract_packages.rs`:
+```rust
+const AGAVE_PATH: &str = "<PATH_TO_YOUR_AGAVE_REPO>";  // Update this path
+```
+
+Don't have the Agave repository yet? You can clone it from:
+```bash
 git clone https://github.com/anza-xyz/agave.git
 ```
 
-The default directory structure should look like this:
+The default setup expects the following structure, but you can use any location by updating the path above:
 ```
 parent-directory/
-├── agave/                    # Full Agave repository
+├── agave/                    # Agave repository
 └── agave-checkout-gen/      # This tool
-```
-
-If you want to use a different location for the Agave repository, you can modify the `AGAVE_PATH` constant in `src/bin/extract_packages.rs`:
-```rust
-const AGAVE_PATH: &str = "./../agave";  // Change this to your preferred path
 ```
 
 ## Usage
 
 ### 1. Generate Package Information
-First, generate a JSON file containing all packages and their dependencies:
+Generate a JSON file containing all packages and their dependencies:
 ```bash
 cargo run --bin extract_packages
 ```
-This command will analyze the Agave repository (using the path specified in `extract_packages.rs`) to generate the package information.
 
 ### 2. Generate Git Checkout Command
 Generate the git sparse checkout command:
