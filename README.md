@@ -17,7 +17,7 @@ cd agave-checkout-gen
 ```
 
 ### 2. Configure Agave Repository Path
-Update the path to your Agave repository in `src/bin/extract_packages.rs`:
+Update the path to your Agave repository in `src/constants.rs`:
 ```rust
 const AGAVE_PATH: &str = "<PATH_TO_YOUR_AGAVE_REPO>";  // Update this path
 ```
@@ -39,28 +39,41 @@ parent-directory/
 ### 1. Generate Package Information
 Generate a JSON file containing all packages and their dependencies:
 ```bash
-cargo run --bin extract_packages
+cargo run --bin extract-packages
 ```
 
 ### 2. Generate Git Checkout Command
 Generate the git sparse checkout command:
 ```bash
-cargo run --bin create_git_command <PACKAGE_NAME>
+cargo run --bin create-git-command <PACKAGE_NAME>
 # example: cargo run --bin create_git_command solana-svm
 ```
 
-### 3. Clone the Repository
+### 3. Generate new workspace members list
+Since you only check out the folders for this specific package, you have to update the workspace 
+members list in your `Cargo.toml`. You can use the `update-cargo-toml` script to generate a members 
+list that only contains the folders you checked out. 
+
+Simply run which creates a new members list in `output/members.toml`.
+```bash
+cargo run --bin update-cargo-toml
+```
+
+### 4. Clone the Repository
 Clone the Agave repository with minimal blob data:
 ```bash
 git clone --filter=blob:none --sparse https://github.com/anza-xyz/agave.git <PROJECT_NAME>
 ```
 
-### 4. Apply Sparse Checkout
+### 6. Apply Sparse Checkout
 Navigate to the cloned repository and apply the generated checkout command:
 ```bash
 cd <PROJECT_NAME>
 # Copy and run the command from sparse_checkout_command.sh
 ```
+
+### 7. Replace Members Array
+Replays the workspace members list in the `Cargo.toml` with the one generated in step 3 (`output/members.toml`).
 
 ### 5. Build Specific Packages
 Build individual packages using cargo:
@@ -74,6 +87,6 @@ cargo build --lib --package <PACKAGE_NAME>
 This project is currently a work in progress. Next steps:
 
 - Evaluate if all necessary dependencies are included
-- Generate a updated Cargo.toml file or a script to update the Cargo.toml file or changes to add to the Cargo.toml file
 - Check if we can run the tests for the packages
+- For some packages I had to also remove lines from `[patch.crates-io]`. Example: For `solana-svm` I had to remove `solana-zk-sdk = { path = "zk-sdk" }` to compile it successfully. 
 

@@ -3,9 +3,7 @@ use std::fs::{self, File};
 use std::io::Write;
 use toml::{Table, Value};
 use serde::{Serialize, Deserialize};
-
-// Path to the local agave repository
-const AGAVE_PATH: &str = "./../agave";
+use agave_checkout_gen::constants::AGAVE_PATH;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct PackageInfo {
