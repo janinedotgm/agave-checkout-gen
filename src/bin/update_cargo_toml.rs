@@ -22,7 +22,36 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if checkout_command.contains("curve") {
         checked_out.push("curves/*".to_string());
     }
-    println!("{:?}", checked_out);
+
+    if let Some(patch_table) = cargo_toml.get_mut("patch") {
+        if let Some(crates_io) = patch_table.get_mut("crates-io").and_then(|c| c.as_table_mut()) {
+            let patches_to_add: Vec<String> = crates_io
+              .iter()
+              .filter_map(|(key, value) | {
+                  if let Some(path) = value.get("path").and_then(|v| v.as_str()) {
+
+                      let path_dir = path.split('/').next().unwrap_or("");
+                      if checked_out.iter().any(|c| c.starts_with(path_dir)) {
+
+                          Some(format!("{} = {}", key, value))
+                      } else {
+                          None
+                      }
+                  } else {
+                      None
+                  }
+              }).collect();
+
+            // Create file for members
+            let mut patch_file = File::create("./output/patches.toml")?;
+
+            // Write members to file
+            writeln!(patch_file, "[patch.crates-io]")?;
+            for p in patches_to_add {
+                writeln!(patch_file, "{}", p)?;
+            }
+        }
+    }
 
     // Get the workspace table
     let workspace = cargo_toml.get_mut( "workspace")
