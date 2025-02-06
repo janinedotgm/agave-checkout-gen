@@ -1,5 +1,5 @@
 use std::{fs, fs::File, io::Write};
-use toml::Table;
+use toml::{Table, Value};
 use agave_checkout_gen::constants::AGAVE_PATH;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -22,60 +22,47 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         checked_out.push("curves/*".to_string());
     }
 
+    // Update members
+    if let Some(workspace) = cargo_toml.get_mut("workspace").and_then(|w| w.as_table_mut()) {
+        if let Some(members) = workspace.get("members").and_then(|m| m.as_array()) {
+            let filtered_members: Vec<Value> = members
+                .iter()
+                .filter_map(|member| {
+                    let member_str = member.as_str().unwrap();
+                    if checked_out.iter().any(|folder| member_str == folder && folder != "sdk") {
+                        Some(Value::String(member_str.to_string()))
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+            
+            workspace.insert("members".to_string(), Value::Array(filtered_members));
+        }
+    }
+
+    // Update patches
     if let Some(patch_table) = cargo_toml.get_mut("patch") {
         if let Some(crates_io) = patch_table.get_mut("crates-io").and_then(|c| c.as_table_mut()) {
-            let patches_to_add: Vec<String> = crates_io
-              .iter()
-              .filter_map(|(key, value) | {
-                  if let Some(path) = value.get("path").and_then(|v| v.as_str()) {
-
-                      let path_dir = path.split('/').next().unwrap_or("");
-                      if checked_out.iter().any(|c| c.starts_with(path_dir)) {
-
-                          Some(format!("{} = {}", key, value))
-                      } else {
-                          None
-                      }
-                  } else {
-                      None
-                  }
-              }).collect();
-
-            // Create file for members
-            let mut patch_file = File::create("./output/patches.toml")?;
-
-            // Write members to file
-            writeln!(patch_file, "[patch.crates-io]")?;
-            for p in patches_to_add {
-                writeln!(patch_file, "{}", p)?;
+            let mut new_crates_io = Table::new();
+            
+            for (key, value) in crates_io.iter() {
+                if let Some(path) = value.get("path").and_then(|v| v.as_str()) {
+                    let path_dir = path.split('/').next().unwrap_or("");
+                    if checked_out.iter().any(|c| c.starts_with(path_dir)) {
+                        new_crates_io.insert(key.clone(), value.clone());
+                    }
+                }
             }
+            
+            *crates_io = new_crates_io;
         }
     }
 
-    // Get the workspace table
-    let workspace = cargo_toml.get_mut( "workspace")
-        .and_then(|w| w.as_table_mut())
-        .ok_or("No [workspace] section found")?;
+    // Write the complete updated Cargo.toml
+    let mut output_file = File::create("./output/Cargo.toml")?;
+    write!(output_file, "{}", cargo_toml.to_string())?;
 
-    // Get the current members array
-    let members = workspace.get("members")
-        .and_then(|m| m.as_array())
-        .ok_or("No members array found")?;
-
-    // Create file for members
-    let mut output_file = File::create("./output/members.toml")?;
-
-    // Write members to file
-    writeln!(output_file, "members = [")?;
-    for member in members {
-        let member_str = member.as_str().unwrap();
-        if checked_out.iter().any(|folder| member_str == folder && folder != "sdk") {
-            writeln!(output_file, "    \"{}\",", member_str)?;
-        }
-    }
-    // Write closing bracket
-    writeln!(output_file, "]")?;
-
-    println!("Successfully updated Cargo.toml with available packages.");
+    println!("Successfully created new Cargo.toml with filtered members and patches.");
     Ok(())
 } 
