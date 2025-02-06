@@ -1,22 +1,19 @@
-use std::{fs, fs::File, io::Write};
+use std::{fs::File, io::Write};
 use toml::{Table, Value};
-use agave_checkout_gen::constants::AGAVE_PATH;
+use crate::constants::AGAVE_PATH;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Read the original Cargo.toml
+pub fn update_cargo_toml(checkout_command: &str) -> Result<(), Box<dyn std::error::Error>> {
     let toml_path = format!("{}/Cargo.toml", AGAVE_PATH);
-    let cargo_toml_content = fs::read_to_string(toml_path)?;
+    let cargo_toml_content = std::fs::read_to_string(toml_path)?;
     let mut cargo_toml: Table = cargo_toml_content.parse()?;
 
-    let checkout_path = format!("./output/sparse_checkout_command.sh");
-    let checkout_command = fs::read_to_string(checkout_path)?;
     let mut checked_out: Vec<String> = checkout_command
-      .lines()
-      .skip(1)// first line is git checkout command
-      .filter(|line| !line.is_empty())
-      .map(|line| line.trim().to_string().replace(" \\",""))
-      .filter(|line| !line.starts_with("curves"))
-      .collect();
+        .lines()
+        .skip(1) // first line is git checkout command
+        .filter(|line| !line.is_empty())
+        .map(|line| line.trim().to_string().replace(" \\", ""))
+        .filter(|line| !line.starts_with("curves"))
+        .collect();
 
     if checkout_command.contains("curve") {
         checked_out.push("curves/*".to_string());
@@ -63,6 +60,5 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut output_file = File::create("./output/Cargo.toml")?;
     write!(output_file, "{}", cargo_toml.to_string())?;
 
-    println!("Successfully created new Cargo.toml with filtered members and patches.");
     Ok(())
 } 

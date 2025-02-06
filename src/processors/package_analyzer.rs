@@ -1,24 +1,54 @@
-use std::collections::HashMap;
-use std::fs::{self, File};
-use std::io::Write;
-use toml::{Table, Value};
+use std::{collections::HashMap, fs::File, io::Write};
 use serde::{Serialize, Deserialize};
-use agave_checkout_gen::constants::AGAVE_PATH;
+use toml::{Table, Value};
+use crate::constants::AGAVE_PATH;
 
 #[derive(Serialize, Deserialize, Debug)]
-struct PackageInfo {
-    path: String,
-    dependencies: HashMap<String, String>,
-    dev_dependencies: HashMap<String, String>,
+pub struct PackageInfo {
+    pub path: String,
+    pub dependencies: HashMap<String, String>,
+    pub dev_dependencies: HashMap<String, String>,
+}
+
+pub fn extract_packages() -> Result<HashMap<String, PackageInfo>, Box<dyn std::error::Error>> {
+    let cargo_toml_path = format!("{}/Cargo.toml", AGAVE_PATH);
+    let cargo_toml_content = std::fs::read_to_string(&cargo_toml_path)?;
+    let parsed_toml: Value = cargo_toml_content.parse::<Value>()?;
+
+    let workspace_dependencies = parsed_toml
+        .get("workspace")
+        .and_then(|workspace| workspace.get("dependencies"))
+        .and_then(|deps| deps.as_table())
+        .ok_or("No [workspace.dependencies] section found in Cargo.toml")?;
+
+    let mut package_info_map: HashMap<String, PackageInfo> = HashMap::new();
+    
+    for (package_name, package_data) in workspace_dependencies {
+        if let Some(path) = package_data.get("path") {
+            let path_str = path.as_str().unwrap_or("").to_string();
+            let (local_deps, local_dev_deps) = get_local_dependencies(path.to_string(), workspace_dependencies);
+
+            package_info_map.insert(package_name.clone(), PackageInfo {
+                path: path_str,
+                dependencies: local_deps,
+                dev_dependencies: local_dev_deps,
+            });
+        }
+    }
+
+    // Save the package information for potential future use
+    let mut output_path = File::create("./output/packages_with_path.json")?;
+    let json_data = serde_json::to_string_pretty(&package_info_map)?;
+    write!(output_path, "{}", json_data)?;
+
+    Ok(package_info_map)
 }
 
 fn get_local_dependencies(path: String, workspace_dependencies: &Table) -> (HashMap<String, String>, HashMap<String, String>) {
     let sanitized_path = path.replace(['"', '\\'], "");
     let package_toml_path = format!("{}/{}/Cargo.toml", AGAVE_PATH, sanitized_path);
-    
-    println!("Processing dependencies for: {}", package_toml_path);
 
-    let package_toml = match fs::read_to_string(package_toml_path.clone()) {
+    let package_toml = match std::fs::read_to_string(package_toml_path.clone()) {
         Ok(content) => content,
         Err(e) => {
             println!("Warning: Could not read {}: {}", package_toml_path, e);
@@ -63,11 +93,10 @@ fn process_packages(
 
                         // Handle solana-sdk dependencies specially
                         if let Some("sdk") = sanitized_dep_path.split('/').next() {
-                          deps.insert("solana-sdk".to_string(), "sdk".to_string());
+                            deps.insert("solana-sdk".to_string(), "sdk".to_string());
                         } else {
-                          deps.insert(package_name.clone(), sanitized_dep_path.clone());
+                            deps.insert(package_name.clone(), sanitized_dep_path.clone());
                         }
-                        
                     }
                 }
             }
@@ -75,43 +104,4 @@ fn process_packages(
     }
 
     deps
-}
-
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let cargo_toml_path = "./../agave/Cargo.toml";
-    let cargo_toml_content = fs::read_to_string(cargo_toml_path)?;
-    let parsed_toml: Value = cargo_toml_content.parse::<Value>()?;
-
-    let workspace_dependencies = parsed_toml
-        .get("workspace")
-        .and_then(|workspace| workspace.get("dependencies"))
-        .and_then(|deps| deps.as_table())
-        .ok_or("No [workspace.dependencies] section found in Cargo.toml")?;
-
-    let mut package_info_map: HashMap<String, PackageInfo> = HashMap::new();
-    
-    for (package_name, package_data) in workspace_dependencies {
-        if let Some(path) = package_data.get("path") {
-            let path_str = path.as_str().unwrap_or("").to_string();
-            let (
-              local_deps, 
-              local_dev_deps
-            ) = get_local_dependencies(path.to_string(), workspace_dependencies);
-
-            package_info_map.insert(package_name.clone(), PackageInfo {
-              path: path_str,
-              dependencies: local_deps,
-              dev_dependencies: local_dev_deps,
-            });
-        }
-    }
-
-    fs::create_dir_all("output")?;
-    let mut output_path = File::create("./output/packages_with_path.json")?;
-    let json_data = serde_json::to_string_pretty(&package_info_map).unwrap();
-    write!(output_path, "{}", json_data)?;
-
-    println!("Dependencies written to `packages_with_path.json`.");
-
-    Ok(())
-}
+} 

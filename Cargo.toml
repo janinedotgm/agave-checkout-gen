@@ -3,22 +3,7 @@ name = "agave_checkout_gen"
 version = "0.1.0"
 edition = "2021"
 
-[lib]
-path = "src/lib.rs"
-
 [dependencies]
 toml = "0.8.19"
 serde = { version = "1.0.217", features = ["derive"] }
 serde_json = "1.0.138"
-
-[[bin]]
-name = "extract-packages"
-path = "src/bin/extract_packages.rs"
-
-[[bin]]
-name = "create-git-command"
-path = "src/bin/create_git_command.rs"
-
-[[bin]]
-name = "update-cargo-toml"
-path = "src/bin/update_cargo_toml.rs"
