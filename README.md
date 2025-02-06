@@ -102,5 +102,3 @@ This project is currently a work in progress. Next steps:
 
 - Evaluate if all necessary dependencies are included
 - Check if we can run the tests for the packages
-- For some packages I had to also remove lines from `[patch.crates-io]`. Example: For `solana-svm` I had to remove `solana-zk-sdk = { path = "zk-sdk" }` to compile it successfully. 
-
