@@ -49,12 +49,12 @@ cargo run --bin create-git-command <PACKAGE_NAME>
 # example: cargo run --bin create_git_command solana-svm
 ```
 
-### 3. Generate new workspace members list
+### 3. Generate new workspace members list and patches dependencies
 Since you only check out the folders for this specific package, you have to update the workspace 
-members list in your `Cargo.toml`. You can use the `update-cargo-toml` script to generate a members 
-list that only contains the folders you checked out. 
+members list and patches dependencies in your `Cargo.toml`. You can use the `update-cargo-toml` script to generate a members 
+list that only contains the folders you checked out and a patches.toml file that only contains the patches dependencies for the checked out packages.
 
-Simply run which creates a new members list in `output/members.toml`.
+The following command creates a new members list in `output/members.toml` and a patches.toml file in `output/patches.toml`.
 ```bash
 cargo run --bin update-cargo-toml
 ```
@@ -73,7 +73,21 @@ cd <PROJECT_NAME>
 ```
 
 ### 7. Replace Members Array
-Replays the workspace members list in the `Cargo.toml` with the one generated in step 3 (`output/members.toml`).
+Replace the workspace members list in the `Cargo.toml` with the one generated in step 3 (`output/members.toml`).
+```rust
+// replace this part with the content of output/members.toml
+members = [
+    // ...
+]
+```
+
+### 8. Replace Patches
+Replace the patches in the `Cargo.toml` with the one generated in step 3 (`output/patches.toml`).
+```rust
+// replace this part with the content of output/patches.toml
+[patch.crates-io]
+// ...
+```
 
 ### 5. Build Specific Packages
 Build individual packages using cargo:

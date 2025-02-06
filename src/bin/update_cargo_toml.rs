@@ -18,7 +18,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
       .filter(|line| !line.starts_with("curves"))
       .collect();
 
-    //
     if checkout_command.contains("curve") {
         checked_out.push("curves/*".to_string());
     }
