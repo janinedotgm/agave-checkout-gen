@@ -99,5 +99,4 @@ This project is currently a work in progress. Next steps:
 
 - Evaluate if all necessary dependencies are included
 - Check if we can run the tests for the packages
-- Test other packages (so far only tested with `solana-svm`)
 - The generated `Cargo.toml` formatting could be improved
