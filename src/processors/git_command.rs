@@ -1,5 +1,5 @@
 use std::{collections::HashSet, fs::File, io::Write};
-use crate::package_analyzer::PackageInfo;
+use crate::processors::package_analyzer::PackageInfo;
 
 pub fn create_git_command(package_name: &str, packages: &std::collections::HashMap<String, PackageInfo>) -> Result<(), Box<dyn std::error::Error>> {
     let mut collected_deps = HashSet::new();

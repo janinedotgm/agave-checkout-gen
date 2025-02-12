@@ -1,9 +1,5 @@
 use std::{env, fs};
-
-mod processors;
-mod constants;
-
-use processors::{
+use agave_checkout_gen::processors::{
     package_analyzer,
     git_command,
     cargo_toml

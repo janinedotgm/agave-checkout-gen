@@ -71,6 +71,28 @@ Replace the `Cargo.toml` in the root directory of your isolated agave repo with 
 cargo build --lib --package <PACKAGE_NAME>
 ```
 
+## Testing
+
+### Running the Test Suite
+
+The project includes a comprehensive test suite that verifies package isolation and compilation for multiple Agave packages. To run the tests:
+
+```bash
+cargo test test_all_packages
+```
+
+This will:
+- Clone a fresh copy of the Agave repository
+- Test each package in sequence
+- Generate a test report with results
+- Save progress as it runs (can be resumed if interrupted)
+
+Test artifacts and results can be found in `tests/output/`:
+- `test_results.json`: Contains the current progress and results
+- `test_report.md`: A formatted report of successful and failed packages
+
+The test suite is designed to be resumable - if interrupted, it will continue from where it left off when run again.
+
 ## Current Status
 
 This project is currently a work in progress. Next steps:
